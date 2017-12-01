@@ -10,6 +10,17 @@ import Toasted from 'vue-toasted';
 
 Vue.use(Toasted);
 
+Vue.config.ignoredElements = [
+  'ion-header',
+  'ion-title',
+  'ion-toolbar',
+  'ion-input',
+  'ion-button',
+  'ion-content',
+  'ion-item',
+  'ion-icon'
+]
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

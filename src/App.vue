@@ -1,11 +1,19 @@
 <template>
   <div id="app">
-    <header>
-      <span>EasyChat</span>
-    </header>
-    <main>
-      <router-view></router-view>
-    </main>
+    <ion-app>
+    <ion-header>
+      <ion-toolbar color='dark'>
+        <ion-title>IonChat</ion-title>
+
+        <router-link to="/rooms">
+          <ion-icon id="people" name='people'></ion-icon>
+        </router-link>
+      </ion-toolbar>
+    </ion-header>
+    
+    <router-view></router-view>
+
+    </ion-app>
   </div>
 </template>
 
@@ -23,13 +31,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-header {
-  background: #03A9F4;
-  color: white;
-  height: 56px;
-  line-height: 56px;
-  padding-left: 15px;
-  font-size: 1.4rem;
-  font-weight: 500;
+#app {
+  height: 100%;
+}
+
+#people {
+  fill: white;
+  position: absolute;
+  font-size: 2.5em;
+  right: 15px;
+  top: 15px;
 }
 </style>

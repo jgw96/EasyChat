@@ -1,167 +1,182 @@
 <template>
   <div class="hello">
-    <video autoplay ref="localVideo" class="local"></video>
+
+    <video ref="localVideo" class="remote"></video>
     
-    <video v-if="chooseRoom" autoplay ref="remotesVideos" class="remote"></video>
+    <video v-if="chooseRoom" ref="remotesVideos" class="remote"></video>
   
-    <transition name="fadeIn" enter-active-class="animated fadeIn">
       <div class="muteBlock" v-if="chooseRoom && !muted">
-        <button class="muteButton" v-on:click="mute">
+        <ion-button color='primary' clear class="muteButton" v-on:click="mute">
           Mute
-        </button>
+        </ion-button>
       </div>
-    </transition>
+
+      <ion-button color='danger' class="disconnectButton" v-on:click="disconnect" v-if="chooseRoom">
+        Disconnect
+      </ion-button>
   
-    <transition name="fadeIn" enter-active-class="animated fadeIn">
       <div class="muteBlock" v-if="muted">
-        <button class="muteButton" v-on:click="unmute">
+        <ion-button color='danger' clear class="muteButton" v-on:click="unmute">
           unmute
-        </button>
+        </ion-button>
       </div>
-    </transition>
-  
-    <transition appear name="slideIn" enter-active-class="animated slideInLeft" leave-active-class="animated fadeOut">
-      <div v-if="!chooseRoom" class="inputBlock">
-        <input type="text" placeholder="Room name" v-model="roomName"></input>
+      
+      <section id='first-block' v-if="!chooseRoom">
+      <div class="inputBlock">
+        <input ref='roomInput' type="text" placeholder="Room name" v-model="roomName"></input>
+        <ion-icon id="share" name='share' v-on:click="share"></ion-icon>
       </div>
-    </transition>
   
-    <transition appear name="slideIn" enter-active-class="animated slideInLeft" leave-active-class="animated fadeOut">
-      <div class="buttonBlock" v-if="!chooseRoom">
-        <button class="callButton" v-on:click="startCall">
+      <div class="buttonBlock">
+        <ion-button color='dark' class="callButton" v-on:click="startCall">
           Start Call
-        </button>
+        </ion-button>
       </div>
-    </transition>
+      </section>
+
   </div>
 </template>
 
 <script>
 export default {
-  name: 'hello',
+  name: "hello",
   data() {
     return {
       webrtc: null,
       chooseRoom: false,
       roomName: null,
-      muted: false
-    }
+      muted: false,
+      waitingToast: null
+    };
   },
-  mounted: function () {
+  mounted: function() {
     this.webrtc = new SimpleWebRTC({
       // the id/element dom element that will hold "our" video
       localVideoEl: this.$refs.localVideo,
       // the id/element dom element that will hold remote videos
-      remoteVideosEl: '',
+      remoteVideosEl: "",
       // immediately ask for camera access
       autoRequestMedia: true
     });
   },
   methods: {
-    startCall: function () {
-      console.log(this.roomName);
+    startCall: function() {
       this.chooseRoom = true;
 
-      requestIdleCallback(() => {
-        this.webrtc.joinRoom(this.roomName);
-
-        const waitingToast = this.$toasted.show('Waiting...');
-
-        this.webrtc.on('videoAdded', (video, peer) => {
-          waitingToast.goAway();
-          console.log('video added', peer);
-          this.$refs.remotesVideos.srcObject = peer.stream;
-
-          this.connectionHandler(peer);
-
-          setTimeout(() => {
-            this.$toasted.show('Connected...', { duration: 1500 });
-          }, 700);
-        });
-      });
+      this.doCall();
 
       this.listeners();
     },
-    listeners: function () {
-      this.webrtc.on('iceFailed', () => {
-        this.$toasted.show('Local connection failure...', { duration: 1500 });
+    doCall: function() {
+      this.webrtc.joinRoom(this.roomName);
+      this.store(this.roomName);
+      console.log(this.roomName);
+
+      this.$refs.localVideo.classList.remove("remote");
+      this.$refs.localVideo.classList.add("local");
+
+      this.waitingToast = this.$toasted.show("Waiting...");
+
+      this.webrtc.on("videoAdded", (video, peer) => {
+        this.waitingToast.goAway();
+        console.log("video added", peer);
+        this.$refs.remotesVideos.srcObject = peer.stream;
+
+        this.connectionHandler(peer);
+
+        setTimeout(() => {
+          this.$toasted.show("Connected...", { duration: 1500 });
+        }, 700);
+      });
+    },
+    listeners: function() {
+      this.webrtc.on("iceFailed", () => {
+        this.$toasted.show("Local connection failure...", { duration: 1500 });
       });
 
-      this.webrtc.on('connectivityError', () => {
-        this.$toasted.show('Remote connection failure...', { duration: 1500 });
+      this.webrtc.on("connectivityError", () => {
+        this.$toasted.show("Remote connection failure...", { duration: 1500 });
       });
     },
-    connectionHandler: function (peer) {
-      peer.pc.on('iceConnectionStateChange', (event) => {
+    connectionHandler: function(peer) {
+      peer.pc.on("iceConnectionStateChange", event => {
         switch (peer.pc.iceConnectionState) {
-          case 'disconnected':
-            this.$toasted.show('Disconnected...', { duration: 1500 });
+          case "disconnected":
+          case "closed":
+            console.log("disconnected");
+            this.$toasted.show("Disconnected...", { duration: 1500 });
             this.chooseRoom = false;
-            break;
-          case 'closed':
-            this.$toasted.show('Disconnected...', { duration: 1500 });
-            this.chooseRoom = false;
+
+            this.$refs.localVideo.classList.remove("local");
+            this.$refs.localVideo.classList.add("remote");
             break;
         }
-      })
+      });
     },
-    mute: function () {
+    mute: function() {
       this.webrtc.mute();
       this.muted = true;
     },
-    unmute: function () {
+    unmute: function() {
       this.webrtc.unmute();
       this.muted = false;
+    },
+    disconnect: function() {
+      this.webrtc.disconnect();
+      this.waitingToast.goAway();
+
+      this.chooseRoom = false;
+    },
+    share: function(e) {
+      if (navigator.share) {
+        navigator
+          .share({
+            title: "Video Chat",
+            text: `You have been invited to a chat. Join ${this.roomName}`,
+            url: window.location.href
+          })
+          .then(() => console.log("Successful share"))
+          .catch(error => console.log("Error sharing", error));
+      } else {
+        this.$refs.roomInput.select();
+      }
+    },
+    store: function(room) {
+      if (!localStorage.getItem('rooms')) {
+        localStorage.setItem('rooms', JSON.stringify([room]));
+      } else {
+        const rooms = JSON.parse(localStorage.getItem('rooms'));
+        rooms.push(room);
+        localStorage.setItem('rooms', JSON.stringify(rooms));
+      }
     }
   }
-}
+};
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style>
+#share {
+  font-size: 2.5em;
+  position: absolute;
+  right: 20px;
+  top: 28px;
+}
+
+#first-block {
+  padding: 2em;
+  background: white;
+  box-shadow: 0px -8px 16px rgba(0, 0, 0, 0.1), 0px -3px 6px rgba(0, 0, 0, 0.08);
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+}
+
 .local {
   position: fixed;
   height: 120px;
   position: fixed;
   bottom: 0;
   right: 0;
-}
-
-.remote {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  object-fit: cover;
-  height: 100%;
-  z-index: -99;
-}
-
-.callButton {
-  border: none;
-  color: white;
-  background: #03A9F4;
-  text-transform: uppercase;
-  font-weight: bolder;
-  flex: 0.8;
-  font-size: 1.4rem;
-  padding: 10px;
-  border-radius: 5px;
-}
-
-.buttonBlock {
-  display: flex;
-  margin-top: 4rem;
-  justify-content: center;
-  will-change: opacity;
-}
-
-.inputBlock {
-  margin-top: 40px;
-  display: flex;
-  justify-content: center;
 }
 
 input[type="text"] {
@@ -182,21 +197,45 @@ input[type="text"] {
 
 input[type="text"]:focus {
   outline: none;
-  border-bottom: solid 2px #03A9F4;
+  border-bottom: solid 2px #03a9f4;
+}
+
+.remote {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  object-fit: cover;
+  height: 100%;
+  z-index: -99;
+}
+
+.buttonBlock {
+  display: flex;
+  margin-top: 4rem;
+  justify-content: center;
+  will-change: opacity;
+}
+
+.inputBlock {
+  display: flex;
+  justify-content: center;
+}
+
+.callButton > button {
+  width: 20em;
 }
 
 .muteButton {
-  color: white;
-  text-transform: uppercase;
-  background: #03A9F4;
-  border: none;
-  font-weight: bolder;
-  font-size: 1.2rem;
-  margin-top: 10px;
-  margin-left: 10px;
-  height: 2.5rem;
-  width: 8rem;
   position: fixed;
   bottom: 10px;
+}
+
+.disconnectButton {
+  position: fixed;
+  top: 74px;
+  left: 15px;
 }
 </style>

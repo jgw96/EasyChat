@@ -10,7 +10,7 @@
     <!--[if IE]><link rel="shortcut icon" href="/static/img/icons/favicon.ico"><![endif]-->
     <!-- Add to home screen for Android and modern mobile browsers -->
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#03A9F4">
+    <meta name="theme-color" content="#222">
 
     <!-- Add to home screen for Safari on iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,13 +19,15 @@
     <link rel="apple-touch-icon" href="/static/img/icons/icon.png">
     <!-- Add to home screen for Windows -->
     <meta name="msapplication-TileImage" content="/static/img/icons/icon.png">
-    <meta name="msapplication-TileColor" content="#03A9F4">
+    <meta name="msapplication-TileColor" content="#222">
     <% for (var chunk of webpack.chunks) {
         for (var file of chunk.files) {
           if (file.match(/\.(js|css)$/)) { %>
     <link rel="<%= chunk.initial?'preload':'prefetch' %>" href="<%= htmlWebpackPlugin.files.publicPath + file %>" as="<%= file.match(/\.css$/)?'style':'script' %>"><% }}} %>
+
+    <script src="https://unpkg.com/@ionic/core@0.0.2-20/dist/ionic.js"></script>
     
-    <!--<link rel="preload" href="https://simplewebrtc.com/latest-v2.js" as="script">-->
+    <link rel="preload" href="https://simplewebrtc.com/latest-v2.js" as="script">
   </head>
   <body>
     <div id="app">This is your fallback content in case JavaScript fails to load.</div>
@@ -33,7 +35,7 @@
     <%= htmlWebpackPlugin.options.serviceWorkerLoader %>
 
     <script src="/static/webrtc.js"></script> 
-    <link href="/static/animate.css" rel="stylesheet" type="text/css">
     <!-- built files will be auto injected -->
-  </body>
+
+    <!--<script src='dist/ionic.js'></script>-->
 </html>

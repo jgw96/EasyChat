@@ -3,6 +3,22 @@
     "rules": "database.rules.json"
   },
   "hosting": {
-    "public": "dist"
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Link",
+            "value": "</dist/ionic.js>;rel=preload;as=script,</static/webrtc.js>;rel=preload;as=script,</dist/ionic/ionic.eng0ita3.js>;rel=preload;as=script,</dist/ionic/yivgqttl.js>;rel=preload;as=script,</dist/ionic/rxxjezd9.css>;rel=preload;as=style,</dist/ionic/3pvl4vc5.js>;rel=preload;as=script,</dist/ionic/6dqshtes.css>;rel=preload;as=style,</dist/ionic/vgyifyua.js>;rel=preload;as=script,</dist/ionic/hlwgmz6g.css>;rel=preload;as=style,</dist/ionic/bxnpxlbz.css>;rel=preload;as=style,</dist/ionic/y1zuplrd.js>;rel=preload;as=script,</dist/ionic/8541lpqj.js>;rel=preload;as=script"
+          }
+        ]
+      }
+    ]
   }
 }
